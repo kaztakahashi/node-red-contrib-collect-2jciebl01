@@ -1,4 +1,4 @@
-// 8/31-1: ようやく1クリック1結果の動作を実現・・・
+// 1クリック1結果途中
 
 module.exports = function(RED) {
               var configUUID;
