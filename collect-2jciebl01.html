@@ -1,13 +1,20 @@
+<script type="text/x-red" data-template-name="2jciebl01">
+  <div class="form-row">
+    <label for="node-input-uuid"><i class="fa fa-wrench"></i> UUID</label>
+    <input type="text" id="node-input-uuid" />
+  </div>
+</script>
+
 <script type="text/javascript">
     RED.nodes.registerType('2jciebl01',{
         category: 'function',
-        color: '#a6bbcf',
+        color: '#e5e5e5',
         defaults: {
-            name: {value:""}
+		uuid: { value: "",required:  false}
         },
         inputs:1,
         outputs:1,
-        icon: "file.png",
+        icon: 'icons8-proximity-sensor-50.png',
         label: function() {
             return this.name||"2jciebl01";
         }

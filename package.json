@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-collect-2jciebl01",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "collect-2jciebl01.js",
   "scripts": {
@@ -8,10 +8,10 @@
   },
   "author": "",
   "license": "ISC",
-  "node-red" : {
-    "nodes" : {
-      "2jciebl01" : "collect-2jciebl01.js"
-     }
+  "node-red": {
+    "nodes": {
+      "2jciebl01": "collect-2jciebl01.js"
+    }
   },
   "dependencies": {
     "noble": "^1.9.1"

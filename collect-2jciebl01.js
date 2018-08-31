@@ -1,21 +1,42 @@
+// 8/31-1: ようやく1クリック1結果の動作を実現・・・
+
 module.exports = function(RED) {
+              var configUUID;
     function Node2jciebl01(config) {
         RED.nodes.createNode(this,config);
         var node = this;
+			var num = 0;
         node.on('input', function(msg) {
 
           var noble = require('noble');
 
           noble.on('stateChange', function(state) {
             if (state === 'poweredOn') {
-              noble.startScanning();
+		  console.log(state);
+              noble.startScanning([], true);
+		    num = 0;
             } else {
               noble.stopScanning();
             }
           });
 
+		console.log(noble.state);
+          if (noble.state === 'poweredOn') {
+		  noble.startScanning([], true);
+		  num = 0;
+	  };
+
           noble.on('discover', function(peripheral) {
             if (peripheral.advertisement && peripheral.advertisement.manufacturerData) {
+		    console.log(config.uuid + "---" + configUUID);
+
+              if ( config.uuid !== "used" ) {
+		      configUUID = config.uuid;
+	      } else {
+		      configUUID = configUUID;
+	      };
+	      
+
               var manufacturerData = peripheral.advertisement.manufacturerData;
               var type = manufacturerData.toString("hex");
               var buffer = manufacturerData;
@@ -24,7 +45,9 @@ module.exports = function(RED) {
               var rssi = peripheral.rssi;
               var now = new Date();
 
-              if (type.startsWith("d502")) {
+		    console.log(config.uuid + "------" + configUUID + "----------" + macAddress);
+              //if ( (type.startsWith("d502") && macAddress === config.uuid.toLowerCase() )  || (type.startsWith("d502") && config.uuid == "") ) {
+              if ( ( type.startsWith("d502") && configUUID && macAddress.toLowerCase()  === configUUID.toLowerCase() )  || ( type.startsWith("d502") && configUUID === '') ) {
                 if (buffer.length < 22) {
                   console.log(macAddress + " is not configure OMRON-Env. Expected AD lenght 22, actual " + buffer.length);
                 } else {
@@ -50,9 +73,25 @@ module.exports = function(RED) {
                   } catch(err) {
                     console.log(err);
                   }
-                  console.log(envData);
+			if ( num === 0 ) {
+                  console.log(num + "///" + envData);
                   msg.payload = envData;
                   node.send(msg);
+                    noble.stopScanning();
+              if (config.uuid !== "used" ) {
+		      configUUID = config.uuid;
+	      };
+              config.uuid = "used";
+			num ++;
+			} else {
+			num ++;
+			}				
+              //noble.startScanning([], true);
+			//peripheral.disconnect(function(error) {
+		//		console.log('disconnected from peripheral');
+		//	});
+			return true;
+                  //noble.stopScanning();
                 }
               }
             }
