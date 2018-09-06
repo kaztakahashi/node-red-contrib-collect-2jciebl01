@@ -1,41 +1,37 @@
-// 1クリック1結果途中
-
 module.exports = function(RED) {
-              var configUUID;
+    var configUUID;
     function Node2jciebl01(config) {
         RED.nodes.createNode(this,config);
         var node = this;
-			var num = 0;
+        var num = 0;
         node.on('input', function(msg) {
-
           var noble = require('noble');
+          var allowDuplicates = false;
+          var oneTime = true;
+          if ( config.continuous ) { oneTime = false; };
+          if ( config.dup ) { allowDuplicates = true; };
+          if ( noble.state === 'poweredOn' ) {
+                  noble.startScanning([], allowDuplicates);
+		  num = 0;
+	  };
 
           noble.on('stateChange', function(state) {
             if (state === 'poweredOn') {
-		  console.log(state);
-              noble.startScanning([], true);
-		    num = 0;
+              noble.startScanning([], allowDuplicates);
+              num = 0;
             } else {
               noble.stopScanning();
             }
           });
 
-		console.log(noble.state);
-          if (noble.state === 'poweredOn') {
-		  noble.startScanning([], true);
-		  num = 0;
-	  };
-
           noble.on('discover', function(peripheral) {
             if (peripheral.advertisement && peripheral.advertisement.manufacturerData) {
-		    console.log(config.uuid + "---" + configUUID);
 
               if ( config.uuid !== "used" ) {
 		      configUUID = config.uuid;
 	      } else {
 		      configUUID = configUUID;
 	      };
-	      
 
               var manufacturerData = peripheral.advertisement.manufacturerData;
               var type = manufacturerData.toString("hex");
@@ -45,8 +41,6 @@ module.exports = function(RED) {
               var rssi = peripheral.rssi;
               var now = new Date();
 
-		    console.log(config.uuid + "------" + configUUID + "----------" + macAddress);
-              //if ( (type.startsWith("d502") && macAddress === config.uuid.toLowerCase() )  || (type.startsWith("d502") && config.uuid == "") ) {
               if ( ( type.startsWith("d502") && configUUID && macAddress.toLowerCase()  === configUUID.toLowerCase() )  || ( type.startsWith("d502") && configUUID === '') ) {
                 if (buffer.length < 22) {
                   console.log(macAddress + " is not configure OMRON-Env. Expected AD lenght 22, actual " + buffer.length);
@@ -73,25 +67,22 @@ module.exports = function(RED) {
                   } catch(err) {
                     console.log(err);
                   }
-			if ( num === 0 ) {
-                  console.log(num + "///" + envData);
-                  msg.payload = envData;
-                  node.send(msg);
-                    noble.stopScanning();
-              if (config.uuid !== "used" ) {
-		      configUUID = config.uuid;
-	      };
-              config.uuid = "used";
-			num ++;
-			} else {
-			num ++;
-			}				
-              //noble.startScanning([], true);
-			//peripheral.disconnect(function(error) {
-		//		console.log('disconnected from peripheral');
-		//	});
-			return true;
-                  //noble.stopScanning();
+
+                  if ( ( num === 0 && oneTime ) || ! oneTime ) {
+                    if ( node.topic !== undefined && node.topic != "" ) msg.topic = node.topic;
+                    msg.payload = envData;
+                    node.send(msg);
+                    num ++; 
+                    if ( oneTime ) {
+                      noble.stopScanning();
+                      if (config.uuid !== "used" ) {
+		        configUUID = config.uuid;
+	              };
+                      config.uuid = "used";
+                      num ++; 
+		    };
+                  }
+                  return true;
                 }
               }
             }
